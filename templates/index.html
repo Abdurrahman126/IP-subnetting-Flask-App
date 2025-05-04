@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}IP Subnet Calculator{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2>Subnet Calculator</h2>
+        <p>Enter an IP address with CIDR notation (e.g., 192.168.1.0/24) to calculate subnet information.</p>
+        
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="post">
+            <div>
+                <label for="network_address">Network Address:</label>
+                <input type="text" id="network_address" name="network_address" placeholder="e.g., 192.168.1.0/24" required>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('tab1', this)">Basic Info</div>
+                <div class="tab" onclick="switchTab('tab2', this)">By Number of Subnets</div>
+                <div class="tab" onclick="switchTab('tab3', this)">By Hosts per Subnet</div>
+            </div>
+            
+            <div id="tab1" class="tab-content active">
+                <input type="hidden" name="calculation_type" value="basic">
+                <input type="submit" value="Calculate">
+            </div>
+            
+            <div id="tab2" class="tab-content">
+                <input type="hidden" name="calculation_type" value="num_subnets">
+                <div>
+                    <label for="num_subnets">Number of Subnets:</label>
+                    <input type="number" id="num_subnets" name="num_subnets" min="1" value="4">
+                </div>
+                <input type="submit" value="Calculate Subnets">
+            </div>
+            
+            <div id="tab3" class="tab-content">
+                <input type="hidden" name="calculation_type" value="hosts_per_subnet">
+                <div>
+                    <label for="hosts_per_subnet">Hosts per Subnet:</label>
+                    <input type="number" id="hosts_per_subnet" name="hosts_per_subnet" min="1" value="30">
+                </div>
+                <div>
+                    <label for="num_subnets_for_hosts">Number of Subnets (optional):</label>
+                    <input type="number" id="num_subnets_for_hosts" name="num_subnets_for_hosts" min="1">
+                </div>
+                <input type="submit" value="Calculate Subnets">
+            </div>
+        </form>
+    </div>
+    
+    {% if subnet_info %}
+        <div class="card">
+            <h2>Network Information</h2>
+            <table>
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Network Address</td>
+                    <td>{{ subnet_info.network_address }}</td>
+                </tr>
+                <tr>
+                    <td>Broadcast Address</td>
+                    <td>{{ subnet_info.broadcast_address }}</td>
+                </tr>
+                <tr>
+                    <td>Netmask</td>
+                    <td>{{ subnet_info.netmask }}</td>
+                </tr>
+                <tr>
+                    <td>Prefix Length</td>
+                    <td>/{{ subnet_info.prefix_length }}</td>
+                </tr>
+                <tr>
+                    <td>Wildcard Mask</td>
+                    <td>{{ subnet_info.wildcard_mask }}</td>
+                </tr>
+                <tr>
+                    <td>Total Addresses</td>
+                    <td>{{ subnet_info.num_addresses }}</td>
+                </tr>
+                <tr>
+                    <td>Usable Hosts</td>
+                    <td>{{ subnet_info.usable_hosts }}</td>
+                </tr>
+                <tr>
+                    <td>First Usable Host</td>
+                    <td>{{ subnet_info.first_host }}</td>
+                </tr>
+                <tr>
+                    <td>Last Usable Host</td>
+                    <td>{{ subnet_info.last_host }}</td>
+                </tr>
+            </table>
+        </div>
+    {% endif %}
+    
+    {% if subnets %}
+        <div class="card">
+            <h2>Subnet Breakdown</h2>
+            <p>Total subnets generated: {{ subnets|length }}</p>
+            
+            <div class="subnet-list">
+                {% for subnet in subnets %}
+                    <div class="subnet-item">
+                        <div class="subnet-title">Subnet {{ loop.index }}: {{ subnet.network_address }}/{{ subnet.prefix_length }}</div>
+                        <table>
+                            <tr>
+                                <td>Network Address</td>
+                                <td>{{ subnet.network_address }}</td>
+                            </tr>
+                            <tr>
+                                <td>Broadcast Address</td>
+                                <td>{{ subnet.broadcast_address }}</td>
+                            </tr>
+                            <tr>
+                                <td>Usable Hosts</td>
+                                <td>{{ subnet.usable_hosts }}</td>
+                            </tr>
+                            <tr>
+                                <td>First Usable Host</td>
+                                <td>{{ subnet.first_host }}</td>
+                            </tr>
+                            <tr>
+                                <td>Last Usable Host</td>
+                                <td>{{ subnet.last_host }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function switchTab(tabId, tabElement) {
+        // Hide all tab contents
+        const tabContents = document.getElementsByClassName('tab-content');
+        for (let i = 0; i < tabContents.length; i++) {
+            tabContents[i].classList.remove('active');
+        }
+        
+        // Remove active class from all tabs
+        const tabs = document.getElementsByClassName('tab');
+        for (let i = 0; i < tabs.length; i++) {
+            tabs[i].classList.remove('active');
+        }
+        
+        // Show the selected tab content and mark tab as active
+        document.getElementById(tabId).classList.add('active');
+        tabElement.classList.add('active');
+        
+        // Update the hidden calculation_type field
+        if (tabId === 'tab1') {
+            document.querySelector('input[name="calculation_type"]').value = 'basic';
+        } else if (tabId === 'tab2') {
+            document.querySelector('input[name="calculation_type"]').value = 'num_subnets';
+        } else if (tabId === 'tab3') {
+            document.querySelector('input[name="calculation_type"]').value = 'hosts_per_subnet';
+        }
+    }
+</script>
+{% endblock %}

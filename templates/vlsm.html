@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}VLSM Subnet Calculator{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <h2>Variable Length Subnet Mask (VLSM) Calculator</h2>
+        <p>Enter a network address and specify host requirements for each subnet.</p>
+        
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="post">
+            <div>
+                <label for="network_address">Network Address:</label>
+                <input type="text" id="network_address" name="network_address" placeholder="e.g., 192.168.1.0/24" required>
+            </div>
+            
+            <div>
+                <label for="num_vlsm_subnets">Number of Subnets:</label>
+                <input type="number" id="num_vlsm_subnets" name="num_vlsm_subnets" min="1" max="20" value="3" onchange="generateSubnetFields(this.value)">
+            </div>
+            
+            <div id="subnet_requirements" class="dynamic-form-container">
+                <!-- Subnet fields will be generated here -->
+                <div class="form-row">
+                    <label for="subnet_1_hosts">Subnet 1 Hosts:</label>
+                    <input type="number" id="subnet_1_hosts" name="subnet_1_hosts" min="1" required>
+                </div>
+                <div class="form-row">
+                    <label for="subnet_2_hosts">Subnet 2 Hosts:</label>
+                    <input type="number" id="subnet_2_hosts" name="subnet_2_hosts" min="1" required>
+                </div>
+                <div class="form-row">
+                    <label for="subnet_3_hosts">Subnet 3 Hosts:</label>
+                    <input type="number" id="subnet_3_hosts" name="subnet_3_hosts" min="1" required>
+                </div>
+            </div>
+            
+            <input type="submit" value="Calculate VLSM Subnets">
+        </form>
+    </div>
+    
+    {% if subnet_info %}
+        <div class="card">
+            <h2>Original Network Information</h2>
+            <table>
+                <tr>
+                    <th>Property</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Network Address</td>
+                    <td>{{ subnet_info.network_address }}</td>
+                </tr>
+                <tr>
+                    <td>Prefix Length</td>
+                    <td>/{{ subnet_info.prefix_length }}</td>
+                </tr>
+                <tr>
+                    <td>Total Addresses</td>
+                    <td>{{ subnet_info.num_addresses }}</td>
+                </tr>
+                <tr>
+                    <td>Usable Hosts</td>
+                    <td>{{ subnet_info.usable_hosts }}</td>
+                </tr>
+            </table>
+        </div>
+    {% endif %}
+    
+    {% if vlsm_subnets %}
+        <div class="card">
+            <h2>VLSM Subnet Allocation</h2>
+            <p>Subnets are allocated in order of largest to smallest required hosts.</p>
+            
+            <div class="subnet-list">
+                {% for subnet in vlsm_subnets %}
+                    <div class="subnet-item">
+                        <div class="subnet-title">Subnet {{ subnet.subnet_number }} (Required Hosts: {{ subnet.required_hosts }})</div>
+                        <table>
+                            <tr>
+                                <td>Network Address</td>
+                                <td>{{ subnet.network_address }}/{{ subnet.prefix_length }}</td>
+                            </tr>
+                            <tr>
+                                <td>Broadcast Address</td>
+                                <td>{{ subnet.broadcast_address }}</td>
+                            </tr>
+                            <tr>
+                                <td>Netmask</td>
+                                <td>{{ subnet.netmask }}</td>
+                            </tr>
+                            <tr>
+                                <td>Usable Hosts</td>
+                                <td>{{ subnet.usable_hosts }}</td>
+                            </tr>
+                            <tr>
+                                <td>First Usable Host</td>
+                                <td>{{ subnet.first_host }}</td>
+                            </tr>
+                            <tr>
+                                <td>Last Usable Host</td>
+                                <td>{{ subnet.last_host }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function generateSubnetFields(count) {
+        const container = document.getElementById('subnet_requirements');
+        container.innerHTML = '';
+        
+        for (let i = 1; i <= count; i++) {
+            const formRow = document.createElement('div');
+            formRow.className = 'form-row';
+            
+            const label = document.createElement('label');
+            label.htmlFor = `subnet_${i}_hosts`;
+            label.textContent = `Subnet ${i} Hosts:`;
+            
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.id = `subnet_${i}_hosts`;
+            input.name = `subnet_${i}_hosts`;
+            input.min = '1';
+            input.required = true;
+            
+            formRow.appendChild(label);
+            formRow.appendChild(input);
+            container.appendChild(formRow);
+        }
+    }
+    
+    // Initialize the form with the default number of subnets
+    document.addEventListener('DOMContentLoaded', function() {
+        const numSubnets = document.getElementById('num_vlsm_subnets').value;
+        if (numSubnets > 0) {
+            generateSubnetFields(numSubnets);
+        }
+    });
+</script>
+{% endblock %}
